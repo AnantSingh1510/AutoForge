@@ -1,2 +1,4 @@
 .env
 /dashboard/node_modules
+/server/__pycache__
+/server/models/__pycache__
