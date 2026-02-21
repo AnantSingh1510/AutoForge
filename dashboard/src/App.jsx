@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react"
 const WS = "ws://localhost:8000/ws"
 
 // ── Utils ──────────────────────────────────────────────────────────────────
-const ts = (iso) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour12: false }) : ""
+const ts = (iso) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' }) : ""
 
 const fileExt = (name = "") => {
   const e = name.split(".").pop()?.toUpperCase()
@@ -14,136 +14,49 @@ const extColor = (name = "") => {
   const e = name.split(".").pop()?.toLowerCase()
   if (["pdf"].includes(e))              return "#ef4444"
   if (["doc","docx"].includes(e))       return "#3b82f6"
-  if (["xls","xlsx","csv"].includes(e)) return "#22c55e"
-  if (["png","jpg","jpeg"].includes(e)) return "#a78bfa"
+  if (["xls","xlsx","csv"].includes(e)) return "#10b981"
+  if (["png","jpg","jpeg"].includes(e)) return "#8b5cf6"
   if (["zip","tar","gz"].includes(e))   return "#f59e0b"
-  if (["py","js","ts"].includes(e))     return "#06b6d4"
-  return "#6b7280"
+  if (["py","js","ts", "jsx"].includes(e)) return "#06b6d4"
+  return "#71717a"
 }
 
-// ── Components ─────────────────────────────────────────────────────────────
-function LiveDot({ on }) {
+// ── UI Components ──────────────────────────────────────────────────────────
+function StatusBadge({ type, label }) {
+  const styles = {
+    success: { bg: "#052e16", color: "#34d399", border: "#065f46" },
+    info:    { bg: "#1e3a8a", color: "#60a5fa", border: "#1e40af" },
+    warning: { bg: "#451a03", color: "#fbbf24", border: "#92400e" },
+    danger:  { bg: "#4c0519", color: "#f87171", border: "#9f1239" },
+    neutral: { bg: "#27272a", color: "#a1a1aa", border: "#3f3f46" },
+  }
+  const s = styles[type] || styles.neutral
+  
   return (
-    <span style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-      {on && <span style={{
-        position: "absolute", width: 8, height: 8, borderRadius: "50%",
-        background: "#22c55e", opacity: 0.5,
-        animation: "ripple 1.4s ease-out infinite",
-      }}/>}
-      <span style={{
-        width: 8, height: 8, borderRadius: "50%",
-        background: on ? "#22c55e" : "#374151",
-        display: "inline-block",
-      }}/>
+    <span style={{
+      display: "inline-block",
+      background: s.bg, color: s.color, border: `1px solid ${s.border}`,
+      padding: "2px 8px", borderRadius: "4px",
+      fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em",
+      textTransform: "uppercase"
+    }}>
+      {label}
     </span>
   )
 }
 
-function Stat({ label, value, accent }) {
+function StatCard({ label, value, trend }) {
   return (
-    <div style={{
-      background: "#0d1117",
-      border: "1px solid #161b22",
-      borderRadius: 12,
-      padding: "18px 20px",
-      borderTop: `3px solid ${accent}`,
+    <div className="stat-card" style={{
+      background: "#18181b", border: "1px solid #27272a", borderRadius: "8px",
+      padding: "20px", display: "flex", flexDirection: "column", gap: "8px"
     }}>
-      <div style={{
-        fontSize: 36, fontWeight: 800,
-        color: accent, lineHeight: 1,
-        fontVariantNumeric: "tabular-nums",
-      }}>{value}</div>
-      <div style={{ fontSize: 11, color: "#4b5563", marginTop: 6, letterSpacing: "0.07em" }}>
+      <div style={{ fontSize: "12px", color: "#a1a1aa", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
         {label}
       </div>
-    </div>
-  )
-}
-
-function EventRow({ ev }) {
-  const cfg = {
-    message:   { label: "IN",     color: "#3b82f6" },
-    reply:     { label: "OUT",    color: "#22c55e" },
-    file_sent: { label: ev.method === "drive" ? "DRIVE" : "DIRECT", color: ev.method === "drive" ? "#f59e0b" : "#22c55e" },
-    error:     { label: "ERROR",  color: "#ef4444" },
-  }
-  const c = cfg[ev.type] || { label: ev.type?.toUpperCase(), color: "#6b7280" }
-
-  return (
-    <div style={{
-      display: "flex", gap: 10, alignItems: "flex-start",
-      padding: "9px 0", borderBottom: "1px solid #0d1117",
-      animation: "fadeUp 0.25s ease both",
-    }}>
-      <span style={{
-        fontSize: 9, fontWeight: 700, letterSpacing: "0.07em",
-        padding: "3px 6px", borderRadius: 4, flexShrink: 0,
-        background: c.color + "18", color: c.color,
-        minWidth: 46, textAlign: "center", marginTop: 1,
-      }}>{c.label}</span>
-      <span style={{ flex: 1, fontSize: 13, color: "#9ca3af", lineHeight: 1.5, wordBreak: "break-word" }}>
-        {ev.text || ev.filename || ev.message || ev.link || "—"}
-      </span>
-      <span style={{ fontSize: 11, color: "#374151", flexShrink: 0 }}>{ts(ev.ts)}</span>
-    </div>
-  )
-}
-
-function ChatBubble({ msg }) {
-  const out = msg.direction === "out"
-  return (
-    <div style={{
-      display: "flex", justifyContent: out ? "flex-end" : "flex-start",
-      marginBottom: 10, animation: "fadeUp 0.2s ease both",
-    }}>
-      <div style={{
-        maxWidth: "72%",
-        background: out ? "#0a2e1a" : "#0d1117",
-        border: `1px solid ${out ? "#14532d" : "#161b22"}`,
-        borderRadius: out ? "12px 2px 12px 12px" : "2px 12px 12px 12px",
-        padding: "9px 13px",
-      }}>
-        <p style={{ margin: 0, fontSize: 13, color: out ? "#86efac" : "#d1d5db", lineHeight: 1.55 }}>
-          {msg.text || msg.message}
-        </p>
-        <p style={{ margin: "5px 0 0", fontSize: 10, color: "#374151" }}>
-          {out ? "DevMate" : (msg.sender || "User")} · {ts(msg.ts)}
-        </p>
+      <div style={{ fontSize: "32px", fontWeight: 500, color: "#ffffff", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
+        {value}
       </div>
-    </div>
-  )
-}
-
-function FileRow({ f }) {
-  const color = extColor(f.filename)
-  const isDrive = f.method === "drive"
-  return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "40px 1fr 70px 72px 76px",
-      alignItems: "center", gap: 12,
-      padding: "10px 0", borderBottom: "1px solid #0d1117",
-      animation: "fadeUp 0.25s ease both",
-    }}>
-      <div style={{
-        background: color + "18", border: `1px solid ${color}33`,
-        borderRadius: 6, padding: "5px 0", textAlign: "center",
-        fontSize: 9, fontWeight: 800, color, letterSpacing: "0.05em",
-      }}>{fileExt(f.filename)}</div>
-      <span style={{
-        fontSize: 13, color: "#d1d5db",
-        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-      }}>{f.filename || "—"}</span>
-      <span style={{ fontSize: 12, color: "#6b7280", textAlign: "right" }}>
-        {f.size_mb != null ? `${f.size_mb} MB` : "—"}
-      </span>
-      <span style={{
-        fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
-        padding: "3px 0", borderRadius: 999, textAlign: "center",
-        background: isDrive ? "#78350f22" : "#052e1622",
-        color: isDrive ? "#f59e0b" : "#22c55e",
-      }}>{isDrive ? "DRIVE" : "DIRECT"}</span>
-      <span style={{ fontSize: 11, color: "#374151", textAlign: "right" }}>{ts(f.ts)}</span>
     </div>
   )
 }
@@ -156,8 +69,10 @@ export default function App() {
   const [convos, setConvos]        = useState([])
   const [files, setFiles]          = useState([])
   const [tab, setTab]              = useState("activity")
-  const activityEnd                = useRef(null)
-  const chatEnd                    = useRef(null)
+  
+  const activityEnd = useRef(null)
+  const chatEnd     = useRef(null)
+  const fileEnd     = useRef(null)
 
   useEffect(() => {
     let ws, timer
@@ -193,152 +108,216 @@ export default function App() {
     return () => { ws?.close(); clearTimeout(timer) }
   }, [])
 
+  // Auto-scroll logic
   useEffect(() => { activityEnd.current?.scrollIntoView({ behavior: "smooth" }) }, [events])
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }) }, [convos])
+  useEffect(() => { fileEnd.current?.scrollIntoView({ behavior: "smooth" }) }, [files])
 
   const tabs = [
-    { id: "activity", label: "Live Activity" },
-    { id: "chat",     label: "Conversations" },
-    { id: "files",    label: "File Log" },
+    { id: "activity", label: "Live Event Log" },
+    { id: "chat",     label: "WhatsApp Message Audit" },
+    { id: "files",    label: "File Registry" },
   ]
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background: #060b12; color: #e5e7eb; font-family: 'IBM Plex Mono', monospace; height: 100%; }
-        ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
-        @keyframes ripple { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.5); opacity: 0; } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+        html, body { 
+          background: #09090b; color: #e4e4e7; 
+          font-family: 'Inter', system-ui, sans-serif; 
+          -webkit-font-smoothing: antialiased;
+          height: 100%; overflow: hidden;
+        }
+        
+        /* Enterprise Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+        /* Data Grid Tables */
+        .data-grid { width: 100%; border-collapse: collapse; text-align: left; }
+        .data-grid th {
+          position: sticky; top: 0; z-index: 10;
+          background: #18181b; color: #a1a1aa;
+          font-size: 11px; font-weight: 600; text-transform: uppercase; letterSpacing: 0.05em;
+          padding: 12px 16px; border-bottom: 1px solid #3f3f46;
+          box-shadow: 0 1px 0 #3f3f46;
+        }
+        .data-grid td {
+          padding: 12px 16px; border-bottom: 1px solid #27272a;
+          font-size: 13px; color: #d4d4d8;
+          vertical-align: top;
+        }
+        .data-grid tbody tr:hover td { background: #27272a40; }
+        .mono-cell { font-family: 'JetBrains Mono', monospace; font-size: 12px !important; color: #a1a1aa !important; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#060b12" }}>
+      <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
 
-        {/* Header */}
+        {/* Top Navbar */}
         <header style={{
-          position: "sticky", top: 0, zIndex: 100,
-          background: "#060b12ee", backdropFilter: "blur(16px)",
-          borderBottom: "1px solid #0d1117",
+          background: "#18181b", borderBottom: "1px solid #27272a",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 28px", height: 52,
+          padding: "0 24px", height: "60px", flexShrink: 0
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{
-              fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 17,
-              color: "#f9fafb", letterSpacing: "-0.3px",
-            }}>DevMate</span>
-            <span style={{
-              fontSize: 9, letterSpacing: "0.12em", color: "#374151",
-              border: "1px solid #161b22", padding: "2px 7px", borderRadius: 4,
-            }}>DASHBOARD</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ width: 24, height: 24, background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", borderRadius: 4 }}></div>
+            <span style={{ fontWeight: 700, fontSize: "18px", color: "#ffffff", letterSpacing: "-0.5px" }}>
+              AutoForge
+            </span>
+            <span style={{ color: "#52525b" }}>/</span>
+            <span style={{ fontSize: "14px", color: "#a1a1aa", fontWeight: 500 }}>System Console</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <LiveDot on={connected} />
-            <span style={{ fontSize: 11, color: connected ? "#22c55e" : "#4b5563" }}>
-              {connected ? "LIVE" : "OFFLINE"}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? "#10b981" : "#ef4444", boxShadow: connected ? "0 0 10px #10b981" : "none" }} />
+            <span style={{ fontSize: "12px", fontWeight: 600, color: connected ? "#10b981" : "#ef4444", textTransform: "uppercase" }}>
+              {connected ? "System Online" : "Disconnected"}
             </span>
           </div>
         </header>
 
-        <main style={{ maxWidth: 1080, margin: "0 auto", padding: "28px 20px 48px" }}>
-
-          {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 28 }}>
-            <Stat label="TOTAL REQUESTS" value={stats.total}  accent="#3b82f6" />
-            <Stat label="SENT DIRECTLY"  value={stats.direct} accent="#22c55e" />
-            <Stat label="DRIVE UPLOADS"  value={stats.drive}  accent="#f59e0b" />
-            <Stat label="ERRORS"         value={stats.failed} accent="#ef4444" />
+        <main style={{ display: "flex", flexDirection: "column", flex: 1, padding: "24px", gap: "24px", overflow: "hidden" }}>
+          
+          {/* KPI Stat Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", flexShrink: 0 }}>
+            <StatCard label="Total Requests" value={stats.total} />
+            <StatCard label="Direct Messages" value={stats.direct} />
+            <StatCard label="Drive Uploads" value={stats.drive} />
+            <StatCard label="System Errors" value={stats.failed} />
           </div>
 
-          {/* Tabs */}
-          <div style={{
-            display: "flex", gap: 2, marginBottom: 16,
-            background: "#0d1117", borderRadius: 8, padding: 3, width: "fit-content",
+          {/* Main Data Panel */}
+          <div style={{ 
+            display: "flex", flexDirection: "column", flex: 1, 
+            background: "#09090b", border: "1px solid #27272a", borderRadius: "8px", 
+            overflow: "hidden" 
           }}>
-            {tabs.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{
-                padding: "6px 16px", borderRadius: 6,
-                border: "none", cursor: "pointer",
-                fontSize: 11, fontFamily: "inherit",
-                letterSpacing: "0.05em",
-                background: tab === t.id ? "#161b22" : "transparent",
-                color: tab === t.id ? "#e5e7eb" : "#4b5563",
-                transition: "all 0.15s",
-              }}>{t.label}</button>
-            ))}
-          </div>
+            
+            {/* Table Navigation */}
+            <div style={{ 
+              display: "flex", borderBottom: "1px solid #27272a", background: "#18181b", padding: "0 8px"
+            }}>
+              {tabs.map(t => (
+                <button key={t.id} onClick={() => setTab(t.id)} style={{
+                  padding: "16px 24px", border: "none", background: "transparent", cursor: "pointer",
+                  fontSize: "13px", fontWeight: 600, color: tab === t.id ? "#ffffff" : "#71717a",
+                  borderBottom: tab === t.id ? "2px solid #10b981" : "2px solid transparent",
+                  transition: "all 0.2s", marginBottom: "-1px"
+                }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Panel */}
-          <div style={{
-            background: "#0d1117",
-            border: "1px solid #161b22",
-            borderRadius: 12,
-            overflow: "hidden",
-          }}>
+            {/* Table Container */}
+            <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+              
+              {/* Event Log Table */}
+              {tab === "activity" && (
+                <table className="data-grid">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "12%" }}>Event Type</th>
+                      <th style={{ width: "68%" }}>Payload / Details</th>
+                      <th style={{ width: "20%", textAlign: "right" }}>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {events.length === 0 ? (
+                      <tr><td colSpan="3" style={{ textAlign: "center", padding: "40px", color: "#52525b" }}>No events recorded</td></tr>
+                    ) : events.map((ev, i) => {
+                      let badgeType = "neutral"; let badgeLabel = ev.type?.toUpperCase() || "UNKNOWN";
+                      if (ev.type === "message") { badgeType = "info"; badgeLabel = "INBOUND"; }
+                      if (ev.type === "reply") { badgeType = "success"; badgeLabel = "OUTBOUND"; }
+                      if (ev.type === "error") { badgeType = "danger"; badgeLabel = "ERROR"; }
+                      if (ev.type === "file_sent") { badgeType = "warning"; badgeLabel = ev.method === "drive" ? "DRIVE API" : "DIRECT"; }
 
-            {/* Activity */}
-            {tab === "activity" && <>
-              <div style={{
-                padding: "12px 18px", borderBottom: "1px solid #0d1117",
-                display: "flex", justifyContent: "space-between",
-              }}>
-                <span style={{ fontSize: 10, color: "#374151", letterSpacing: "0.1em" }}>LIVE AGENT ACTIVITY</span>
-                <span style={{ fontSize: 10, color: "#1e293b" }}>{events.length} events</span>
-              </div>
-              <div style={{ height: 460, overflowY: "auto", padding: "4px 18px" }}>
-                {events.length === 0
-                  ? <Empty text="Waiting for activity" sub="Send a WhatsApp message to start" />
-                  : events.map((ev, i) => <EventRow key={ev.id ?? i} ev={ev} />)
-                }
-                <div ref={activityEnd} />
-              </div>
-            </>}
+                      return (
+                        <tr key={ev.id ?? i}>
+                          <td><StatusBadge type={badgeType} label={badgeLabel} /></td>
+                          <td style={{ wordBreak: "break-all" }}>{ev.text || ev.filename || ev.message || ev.link || "—"}</td>
+                          <td className="mono-cell" style={{ textAlign: "right" }}>{ts(ev.ts)}</td>
+                        </tr>
+                      )
+                    })}
+                    <tr ref={activityEnd} style={{ height: 0 }}><td colSpan="3" style={{ padding: 0, border: "none" }}></td></tr>
+                  </tbody>
+                </table>
+              )}
 
-            {/* Conversations */}
-            {tab === "chat" && <>
-              <div style={{ padding: "12px 18px", borderBottom: "1px solid #0d1117" }}>
-                <span style={{ fontSize: 10, color: "#374151", letterSpacing: "0.1em" }}>WHATSAPP CONVERSATIONS</span>
-              </div>
-              <div style={{ height: 460, overflowY: "auto", padding: "16px 18px" }}>
-                {convos.length === 0
-                  ? <Empty text="No messages yet" />
-                  : convos.map((m, i) => <ChatBubble key={i} msg={m} />)
-                }
-                <div ref={chatEnd} />
-              </div>
-            </>}
+              {/* Conversations Table */}
+              {tab === "chat" && (
+                <table className="data-grid">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "10%" }}>Direction</th>
+                      <th style={{ width: "15%" }}>Sender</th>
+                      <th style={{ width: "60%" }}>Message Content</th>
+                      <th style={{ width: "15%", textAlign: "right" }}>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {convos.length === 0 ? (
+                      <tr><td colSpan="4" style={{ textAlign: "center", padding: "40px", color: "#52525b" }}>No messages logged</td></tr>
+                    ) : convos.map((msg, i) => {
+                      const isOut = msg.direction === "out";
+                      return (
+                        <tr key={i}>
+                          <td><StatusBadge type={isOut ? "success" : "info"} label={isOut ? "OUT" : "IN"} /></td>
+                          <td style={{ fontWeight: 500, color: isOut ? "#10b981" : "#ffffff" }}>{isOut ? "AutoForge" : (msg.sender || "User")}</td>
+                          <td style={{ lineHeight: "1.5" }}>{msg.text || msg.message}</td>
+                          <td className="mono-cell" style={{ textAlign: "right" }}>{ts(msg.ts)}</td>
+                        </tr>
+                      )
+                    })}
+                    <tr ref={chatEnd} style={{ height: 0 }}><td colSpan="4" style={{ padding: 0, border: "none" }}></td></tr>
+                  </tbody>
+                </table>
+              )}
 
-            {/* Files */}
-            {tab === "files" && <>
-              <div style={{ padding: "12px 18px", borderBottom: "1px solid #0d1117" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 70px 72px 76px", gap: 12 }}>
-                  {["TYPE","FILENAME","SIZE","METHOD","TIME"].map(h =>
-                    <span key={h} style={{ fontSize: 9, color: "#374151", letterSpacing: "0.1em" }}>{h}</span>
-                  )}
-                </div>
-              </div>
-              <div style={{ height: 460, overflowY: "auto", padding: "4px 18px" }}>
-                {files.length === 0
-                  ? <Empty text="No files fetched yet" />
-                  : files.map((f, i) => <FileRow key={i} f={f} />)
-                }
-              </div>
-            </>}
-
+              {/* File Logs Table */}
+              {tab === "files" && (
+                <table className="data-grid">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "8%" }}>Ext</th>
+                      <th style={{ width: "45%" }}>Filename</th>
+                      <th style={{ width: "15%", textAlign: "right" }}>Size</th>
+                      <th style={{ width: "17%", textAlign: "center" }}>Source</th>
+                      <th style={{ width: "15%", textAlign: "right" }}>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {files.length === 0 ? (
+                      <tr><td colSpan="5" style={{ textAlign: "center", padding: "40px", color: "#52525b" }}>No files processed</td></tr>
+                    ) : files.map((f, i) => {
+                      const color = extColor(f.filename)
+                      return (
+                        <tr key={i}>
+                          <td>
+                            <span style={{ color, fontWeight: 700, fontSize: "11px" }}>{fileExt(f.filename)}</span>
+                          </td>
+                          <td style={{ fontWeight: 500, color: "#e4e4e7" }}>{f.filename || "—"}</td>
+                          <td className="mono-cell" style={{ textAlign: "right" }}>{f.size_mb != null ? `${f.size_mb} MB` : "—"}</td>
+                          <td style={{ textAlign: "center" }}>
+                            <StatusBadge type={f.method === "drive" ? "warning" : "success"} label={f.method === "drive" ? "G-DRIVE" : "DIRECT"} />
+                          </td>
+                          <td className="mono-cell" style={{ textAlign: "right" }}>{ts(f.ts)}</td>
+                        </tr>
+                      )
+                    })}
+                    <tr ref={fileEnd} style={{ height: 0 }}><td colSpan="5" style={{ padding: 0, border: "none" }}></td></tr>
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </main>
       </div>
     </>
-  )
-}
-
-function Empty({ text, sub }) {
-  return (
-    <div style={{ textAlign: "center", padding: "72px 0", color: "#1e293b" }}>
-      <p style={{ fontSize: 13 }}>{text}</p>
-      {sub && <p style={{ fontSize: 11, marginTop: 6 }}>{sub}</p>}
-    </div>
   )
 }
