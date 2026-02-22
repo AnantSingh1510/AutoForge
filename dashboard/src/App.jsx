@@ -3,7 +3,8 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Console from "./pages/Console"; 
 import Tools from "./pages/Tools";
-import Onboard from "./pages/Onboard"; // <-- Add this import
+import Onboard from "./pages/Onboard";
+import AuditLogs from "./pages/AuditLogs";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="console" element={<Console />} />
           <Route path="tools" element={<Tools />} />
+          <Route path="logs" element={<AuditLogs />} />
         </Route>
       </Routes>
     </BrowserRouter>

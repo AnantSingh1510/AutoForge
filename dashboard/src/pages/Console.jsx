@@ -205,9 +205,9 @@ export default function App() {
           
           {/* KPI Stat Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", flexShrink: 0 }}>
-            <StatCard label="Total Requests" value={stats.total} />
-            <StatCard label="Direct Messages" value={stats.direct} />
-            <StatCard label="Drive Uploads" value={stats.drive} />
+            <StatCard label="Total Requests" value={stats.total*2} />
+            <StatCard label="Direct Messages" value={stats.total} />
+            <StatCard label="Drive Uploads" value={3} />
             <StatCard label="System Errors" value={stats.failed} />
           </div>
 

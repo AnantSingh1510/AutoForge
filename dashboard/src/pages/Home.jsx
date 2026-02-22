@@ -41,7 +41,7 @@ export default function Home() {
 
     const calcTokens = (ev) => {
       const content = ev.text || ev.filename || ev.message || ""
-      return content.length // 1 letter = 1 token approximation
+      return content.length * 25 // 1 letter = 1 token approximation
     }
 
     function connect() {

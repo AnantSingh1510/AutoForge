@@ -17,7 +17,8 @@ export default function Layout() {
   const navItems = [
     { path: "/", label: "Agent Overview", icon: "❖" },
     { path: "/console", label: "System Console", icon: "⌘" },
-    { path: "/tools", label: "Tools", icon: "⚙" }
+    { path: "/tools", label: "Tools", icon: "⚙" },
+    { path: "/logs", label: "Audit Logs", icon: "▤" }
   ];
 
   return (
