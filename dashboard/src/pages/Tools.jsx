@@ -100,6 +100,13 @@ export default function Tools() {
           transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
+
+                /* Enterprise Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+        
         .shadcn-switch[aria-checked="true"] .shadcn-thumb { transform: translateX(20px); }
         .shadcn-switch[aria-checked="false"] .shadcn-thumb { transform: translateX(0); }
       `}</style>
@@ -129,7 +136,7 @@ export default function Tools() {
         </header>
 
         {/* Main Content Area */}
-        <main style={{ display: "flex", flexDirection: "column", flex: 1, padding: "32px 24px", overflowY: "auto" }}>
+        <main style={{ display: "flex", flexDirection: "column", flex: 1, padding: "32px 24px", overflowY: "" }}>
           <div style={{ maxWidth: "1200px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "32px" }}>
             
             {/* Page Title */}
