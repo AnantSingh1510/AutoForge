@@ -7,6 +7,7 @@ import {
   Mic,
   Settings2,
   Github,
+  Code2
 } from "lucide-react";
 
 // Kept the initial state, but they are now strictly read-only representations
@@ -51,6 +52,12 @@ const tools = [
   name: "GitHub",
   description: "Access repositories, manage issues, and automate workflows.",
   icon: Github,
+  enabled: true,
+},
+{
+  name: "Codex",
+  description: "Generate, analyze, and refactor code using advanced AI models.",
+  icon: Code2 ,
   enabled: true,
 },
 ];
