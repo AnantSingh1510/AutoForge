@@ -5,7 +5,6 @@ import {
   GitCommit, Calendar, MessageCircle
 } from "lucide-react";
 
-// ─── TOOL CONFIGURATION ───────────────────────────────────────────────────────
 const initialTools = [
   {
     id: "local",
@@ -98,7 +97,6 @@ export default function Tools() {
     setTools(tools.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t));
   };
 
-  // ─── MOCK DATA RENDERERS FOR MODALS ─────────────────────────────────────────
   const renderModalContent = (toolId) => {
     const today = "Feb 22, 2026";
     
@@ -255,13 +253,6 @@ export default function Tools() {
             <div style={{ ...cardStyle, flexDirection: "row", alignItems: "center", gap: "16px" }}>
               <FileSpreadsheet size={24} color="#10b981" />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "14px", color: "#e4e4e7", fontWeight: 500 }}>EVENSEM2026.xls - BTECH 8 SEM.csv</div>
-                <div style={{ fontSize: "12px", color: "#a1a1aa", marginTop: "2px" }}>Synced {today} at 09:45 AM</div>
-              </div>
-            </div>
-            <div style={{ ...cardStyle, flexDirection: "row", alignItems: "center", gap: "16px" }}>
-              <FileSpreadsheet size={24} color="#10b981" />
-              <div style={{ flex: 1 }}>
                 <div style={{ fontSize: "14px", color: "#e4e4e7", fontWeight: 500 }}>EVENSEM2026.xls - BTECH 6 SEM.csv</div>
                 <div style={{ fontSize: "12px", color: "#a1a1aa", marginTop: "2px" }}>Synced {today} at 09:40 AM</div>
               </div>
@@ -335,13 +326,6 @@ export default function Tools() {
             <span style={{ color: "#52525b" }}>/</span>
             <span style={{ fontSize: "14px", color: "#a1a1aa", fontWeight: 500 }}>Integrations & Modules</span>
           </div>
-          <button style={{ 
-            display: "flex", alignItems: "center", gap: "8px", color: "#e4e4e7", 
-            background: "#27272a", border: "1px solid #3f3f46", padding: "6px 12px", 
-            borderRadius: "6px", fontSize: "12px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
-          }} onMouseEnter={e => e.currentTarget.style.background = "#3f3f46"} onMouseLeave={e => e.currentTarget.style.background = "#27272a"}>
-            <Settings2 size={16} /> Configure
-          </button>
         </header>
 
         {/* Main Content Area */}
@@ -401,7 +385,7 @@ export default function Tools() {
                     <button 
                       role="switch" 
                       aria-checked={tool.enabled} 
-                      onClick={(e) => toggleTool(e, tool.id)}
+                      onClick={() => {}}
                       className="shadcn-switch"
                     >
                       <span className="shadcn-thumb" />
