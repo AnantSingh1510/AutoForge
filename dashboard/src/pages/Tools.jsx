@@ -5,7 +5,8 @@ import {
   Calendar,
   FileText,
   Mic,
-  Settings2
+  Settings2,
+  Github,
 } from "lucide-react";
 
 // Kept the initial state, but they are now strictly read-only representations
@@ -40,6 +41,18 @@ const tools = [
     icon: Mic,
     enabled: true,
   },
+    {
+    name: "Eleven Labs",
+    description: "Generate and stream AI voice responses.",
+    icon: Mic,
+    enabled: true,
+  },
+  {
+  name: "GitHub",
+  description: "Access repositories, manage issues, and automate workflows.",
+  icon: Github,
+  enabled: true,
+},
 ];
 
 export default function Tools() {
