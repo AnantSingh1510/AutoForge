@@ -76,13 +76,29 @@ export default function App() {
 
   useEffect(() => {
     let ws, timer
+    let isMounted = true; // 1. Add a flag to track mount status
 
     function connect() {
       ws = new WebSocket(WS)
-      ws.onopen  = () => setConnected(true)
-      ws.onclose = () => { setConnected(false); timer = setTimeout(connect, 3000) }
+      
+      ws.onopen  = () => {
+        if (!isMounted) {
+            ws.close(); // Close immediately if unmounted while connecting
+            return;
+        }
+        setConnected(true)
+      }
+      
+      ws.onclose = () => { 
+        if (!isMounted) return; // 2. DO NOT reconnect if the component unmounted
+        
+        setConnected(false); 
+        timer = setTimeout(connect, 3000);
+      }
 
       ws.onmessage = ({ data }) => {
+        if (!isMounted) return; // Optional safety check
+        
         const msg = JSON.parse(data)
         if (msg.type === "ping") return
 
@@ -105,7 +121,12 @@ export default function App() {
     }
 
     connect()
-    return () => { ws?.close(); clearTimeout(timer) }
+    
+    return () => { 
+      isMounted = false; // 3. Set flag to false on unmount
+      ws?.close(); 
+      clearTimeout(timer); 
+    }
   }, [])
 
   // Auto-scroll logic
